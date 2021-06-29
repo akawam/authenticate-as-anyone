@@ -1,8 +1,8 @@
 <?php
 
-namespace Leekman\AuthenticateAsAnyone\Tests;
+namespace Akawam\AuthenticateAsAnyone\Tests;
 
-use Leekman\AuthenticateAsAnyone\AuthenticateAsAnyoneServiceProvider;
+use Akawam\AuthenticateAsAnyone\AuthenticateAsAnyoneServiceProvider;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {

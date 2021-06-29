@@ -1,9 +1,7 @@
 <?php
 
-namespace Leekman\AuthenticateAsAnyone;
+namespace Akawam\AuthenticateAsAnyone\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
