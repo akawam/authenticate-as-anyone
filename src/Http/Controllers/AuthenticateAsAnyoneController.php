@@ -2,11 +2,13 @@
 
 namespace Akawam\AuthenticateAsAnyone\Http\Controllers;
 
+use Akawam\AuthenticateAsAnyone\Events\UserIsSwitching;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class AuthenticateAsAnyoneController extends Controller
@@ -59,7 +61,9 @@ class AuthenticateAsAnyoneController extends Controller
 
         $user = (new $model)->findOrFail($userId);
 
-        //reconnect origin user
+        event(new UserIsSwitching($this->getCurrentUser(), $user));
+        dd('pok');
+        /*//reconnect origin user
         if (session()->has('aaa.origin-user')) {
             session()->forget(
                 [
@@ -70,7 +74,7 @@ class AuthenticateAsAnyoneController extends Controller
         } else {
             $modelData = $this->models[array_pop($modelExploded)];
             $this->handleSessions($user, $modelData);
-        }
+        }*/
         Auth::guard($this->getGuardFromUser($user))->login($user);
 
         return redirect()->route('dashboard');
