@@ -21,7 +21,10 @@
         "psr-4": {
             "Akawam\\AuthenticateAsAnyone\\": "src",
             "Akawam\\AuthenticateAsAnyone\\Tests\\": "tests"
-        }
+        },
+        "files": [
+            "src/Http/helpers.php"
+        ]
     },
     "require": {
         "php": "^7.2.5 || ^8.0",

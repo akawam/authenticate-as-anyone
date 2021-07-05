@@ -9,12 +9,12 @@ class UserIsSwitching
 {
     use Dispatchable, SerializesModels;
 
-    public $originalUser;
-    public $user;
+    public $currentUser;
+    public $newUser;
 
-    public function __construct($originalUser, $user)
+    public function __construct($currentUser, $newUser)
     {
-        $this->originalUser = $originalUser;
-        $this->user = $user;
+        $this->currentUser = $currentUser;
+        $this->newUser = $newUser;
     }
 }
