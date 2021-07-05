@@ -3,13 +3,16 @@
 namespace Akawam\AuthenticateAsAnyone;
 
 use Akawam\AuthenticateAsAnyone\Http\Controllers\AuthenticateAsAnyoneController;
+use Akawam\AuthenticateAsAnyone\Providers\EventServiceProvider;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class AuthenticateAsAnyoneServiceProvider extends ServiceProvider
 {
     public $viewPath = __DIR__.'/../resources/views';
+    public $configPath = __DIR__.'/../config/auth-as-anyone.php';
 
     /**
      * Register services.
@@ -18,12 +21,12 @@ class AuthenticateAsAnyoneServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/auth-as-anyone.php', 'auth-as-anyone');
-        $this->loadRoutesFrom(__DIR__.'/routes.php');
-        if ($this->app->has('view')) {
-            $this->loadViewsFrom($this->viewPath, 'authenticate-as-anyone');
-        }
+        $this->mergeConfigFrom($this->configPath, 'auth-as-anyone');
+        $this->registerRoutes();
+        $this->app->register(EventServiceProvider::class);
+
     }
+
 
     /**
      * Bootstrap services.
@@ -33,29 +36,52 @@ class AuthenticateAsAnyoneServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadViewsFrom($this->viewPath, 'authenticate-as-anyone');
         $this->app->make(AuthenticateAsAnyoneController::class);
 
         if ($this->app->runningInConsole()) {
             //publish config
-            $configPath = __DIR__.'/../config/auth-as-anyone.php';
-            if (function_exists('config_path')) {
-                $publishPath = config_path('auth-as-anyone.php');
-            } else {
-                $publishPath = base_path('config/auth-as-anyone.php');
-            }
-            $this->publishes([$configPath => $publishPath], 'config');
-
+            $this->publishes([
+                $this->configPath => config_path('auth-as-anyone.php'),
+            ],
+                'config');
             //publish views
-            if (function_exists('resource_path')) {
-                $publishPath = resource_path('views/vendor/auth-as-anyone');
-            } else {
-                $publishPath = base_path('resources/views/vendor/auth-as-anyone');
-            }
-            $this->publishes([$this->viewPath => $publishPath]);
+            $this->publishes([
+                $this->viewPath => resource_path('views/vendor/authenticate-as-anyone'),
+            ],
+                'views');
         }
+
         Blade::directive('aaaLogged', function ()
         {
             return "<?php echo view('authenticate-as-anyone::logged-ribbon')->render(); ?>";
         });
+    }
+
+    /**
+     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
+     */
+    protected function registerRoutes(): void
+    {
+        Route::group($this->routeConfiguration(), function ()
+        {
+            $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        });
+    }
+
+    /**
+     * Route configuration
+     *
+     * @return array
+     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
+     */
+    protected function routeConfiguration(): array
+    {
+        return [
+            'namespace' => 'Akawam\AuthenticateAsAnyone\Http\Controllers',
+            'prefix' => config('auth-as-anyone.route-prefix'),
+            'middleware' => array_merge(['web'], config('auth-as-anyone.middlewares')),
+            'as' => 'authenticate-as-anyone.',
+        ];
     }
 }

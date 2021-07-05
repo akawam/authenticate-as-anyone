@@ -1,47 +1,22 @@
 <?php
 
 return [
-    'banner-color' => '',
-    'route-prefix' => 'authenticate-as-anyone',
+    'route-prefix' => 'authenticate-as-anyone', //required
     'middlewares' =>
         [
-            'auth',
+            'auth', //optional
         ],
     'models' =>
         [
-            /*
-             *  'ModelName' =>
+            //required name of the Model
+            'User' =>
                 [
-                    'namespace' => 'your namespace' (default 'App\Models'),
+                    'namespace' => 'App\Models',//optional (default is App\Models)
                     'columns' => [
-                        'name' => 'nom_admin',
-                        'firstname' => 'prenom_admin',
-                        'login' => 'email',
+                        'name' => 'name', //optional (default is name)
+                        'firstname' => 'firstname', //optional (default is firstname)
+                        'login' => 'email',//optional (default is email)
                     ],
-                    'pretty-name' => 'Administrators',
-                ],
-             *
-             * */
-
-            'Admin' =>
-                [
-                    'namespace' => 'App\Models',
-                    'columns' => [
-                        'name' => 'nom_admin',
-                        'firstname' => 'prenom_admin',
-                        'login' => 'email',
-                    ],
-                    'pretty-name' => 'Administrators',
-                ],
-            'Owner' =>
-                [
-                    'namespace' => 'App\Models',
-                    'columns' => [
-                        'name' => 'nom_utilisateur',
-                        'firstname' => 'prenom_utilisateur',
-                        'login' => 'email',
-                    ],
-                    'pretty-name' => 'Owners',
                 ],
         ],
 ];

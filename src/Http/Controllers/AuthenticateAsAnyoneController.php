@@ -2,11 +2,14 @@
 
 namespace Akawam\AuthenticateAsAnyone\Http\Controllers;
 
-use Illuminate\Contracts\Auth\Authenticatable;
+use Akawam\AuthenticateAsAnyone\Events\UserIsSwitching;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class AuthenticateAsAnyoneController extends Controller
@@ -22,29 +25,53 @@ class AuthenticateAsAnyoneController extends Controller
      * @return Application|Factory|View
      * @author Valentin Estreguil <valentin.estreguil@akawam.com>
      */
-    public function index()
+    public function index(Request $request, $model = null)
     {
-        $data = collect();
-
-        foreach ($this->models as $modelName => $modelData) {
-            $pathModel = $this->getModelNamespace($modelData).'\\'.$modelName;
-            $instance = new $pathModel;
-            $modelCollection = $instance->paginate(10);
-
-            $attributes = $this->getAttributes($modelData);
-
-            foreach ($modelCollection as $modelCollectionValue) {
-                $this->addAuthenticateAttributes($modelCollectionValue, $attributes);
-            }
-
-            $data->push((object) [
-                'models' => $modelCollection,
-                'modelName' => $modelName,
-                'prettyName' => $modelData['pretty-name'],
-            ]);
+        $currentUser = aaaGetCurrentUser();
+        if ($currentUser === null) {
+            abort(404);
         }
 
-        return view('authenticate-as-anyone::index', compact('data'));
+        $models = $this->models;
+
+        if (empty($model)) {
+            $modelName = array_key_first($models);
+            $modelData = array_shift($models);
+        } else {
+            $modelName = $model;
+            $modelData = $models[$model];
+        }
+
+        //get attributes for model
+        $attributes = aaaGetAttributes($modelData);
+
+        $pathModel = $this->getModelNamespace($modelData).'\\'.$modelName;
+        $instance = new $pathModel;
+        //search users
+        $userCollection = $instance->when(!empty($request->search),
+            function (Builder $query) use ($attributes, $request)
+            {
+                return $query->where($attributes['name'], 'like', '%'.$request->search.'%')
+                    ->orWhere($attributes['firstname'], 'like', '%'.$request->search.'%')
+                    ->orWhere($attributes['login'], 'like', '%'.$request->search.'%');
+            })
+            ->when(get_class($instance) === get_class($currentUser),
+                function (Builder $query) use ($instance, $currentUser)
+                {
+                    return $query->where($instance->getAuthIdentifierName(), '<>', $currentUser->getAuthIdentifier());
+                })
+            ->paginate(10);
+
+        foreach ($userCollection as $key => $user) {
+            aaaAddAuthenticateAttributes($user, $attributes);
+        }
+
+        return view('authenticate-as-anyone::index')
+            ->with([
+                'users' => $userCollection->appends($request->only('search')),
+                'models' => $this->models,
+                'currentModelName' => $modelName,
+            ]);
     }
 
     /**
@@ -55,23 +82,17 @@ class AuthenticateAsAnyoneController extends Controller
      */
     public function auth($model, $userId): RedirectResponse
     {
-        $modelExploded = explode('\\', $model);
-
         $user = (new $model)->findOrFail($userId);
 
-        //reconnect origin user
-        if (session()->has('aaa.origin-user')) {
-            session()->forget(
-                [
-                    'aaa.origin-user',
-                    'aaa.user',
-                ]
-            );
-        } else {
-            $modelData = $this->models[array_pop($modelExploded)];
-            $this->handleSessions($user, $modelData);
+        $currentUser = aaaGetCurrentUser();
+        if ($currentUser === null) {
+            abort(404);
         }
-        Auth::guard($this->getGuardFromUser($user))->login($user);
+
+        event(new UserIsSwitching($currentUser, $user));
+
+        Auth::guard(aaaGetGuardFromUser($currentUser))->logout();
+        Auth::guard(aaaGetGuardFromUser($user))->login($user);
 
         return redirect()->route('dashboard');
     }
@@ -86,91 +107,5 @@ class AuthenticateAsAnyoneController extends Controller
         return $modelData['namespace'] ?? 'App\Models';
     }
 
-    private function handleSessions($user, $modelData): void
-    {
-        $currentUser = $this->getCurrentUser();
-        if ($currentUser === null) {
-            abort(404);
-        }
 
-        $attributes = $this->getAttributes($modelData);
-        $this->addAuthenticateAttributes($user, $attributes);
-
-        session()->put('aaa.origin-user', $currentUser);
-        session()->put('aaa.user', $user);
-    }
-
-    /**
-     * @return Authenticatable|null
-     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
-     */
-    private function getCurrentUser(): ?Authenticatable
-    {
-        foreach (config('auth.guards') as $guardName => $guard) {
-            if (Auth::guard($guardName)->check()) {
-                $user = Auth::guard($guardName)->user();
-                if (!$user) {
-                    return null;
-                }
-                return $user;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @param $modelData
-     * @return array
-     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
-     */
-    private function getAttributes($modelData): array
-    {
-        return [
-            'id' => $modelData['columns']['id'] ?? 'id',
-            'name' => $modelData['columns']['name'] ?? 'name',
-            'firstname' => $modelData['columns']['firstname'] ?? 'firstname',
-            'login' => $modelData['columns']['login'] ?? 'email',
-        ];
-    }
-
-    /**
-     * @param $model
-     * @param $attributes
-     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
-     */
-    private function addAuthenticateAttributes($model, $attributes): void
-    {
-        [$id, $name, $firstName, $login] =
-            [
-                $attributes['id'],
-                $attributes['name'],
-                $attributes['firstname'],
-                $attributes['login'],
-            ];
-
-        $model->aaaId = $model->$id;
-        $model->aaaName = $model->$name;
-        $model->aaaFirstName = $model->$firstName;
-        $model->aaaLogin = $model->$login;
-    }
-
-    /**
-     * @param $user
-     * @return string|null
-     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
-     */
-    private function getGuardFromUser($user): ?string
-    {
-        $userClass = get_class($user);
-        foreach (config('auth.providers') as $providerName => $provider){
-            if ($userClass === $provider['model']){
-                foreach (config('auth.guards') as $guardName => $guard){
-                    if ($providerName === $guard['provider']){
-                        return $guardName;
-                    }
-                }
-            }
-        }
-        return null;
-    }
 }
