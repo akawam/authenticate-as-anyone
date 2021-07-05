@@ -114,4 +114,4 @@ class EventServiceProvider extends ServiceProvider
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more informations.
+The MIT License (MIT). Please see [License File](LICENSE.md) for more informations.
