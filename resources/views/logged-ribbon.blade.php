@@ -24,13 +24,21 @@
 
             background-color: #f0f0f0;
         }
+
         body {
             padding-top: 56px;
         }
+
         .aaa-banner__content {
             color: #333;
             font-size: 14px;
+            margin: 0;
         }
+
+        .aaa-banner__content b {
+            font-weight: bold;
+        }
+
         .aaa-banner__from {
             display: inline-block;
             padding: 0 4px;
@@ -40,6 +48,7 @@
             border-radius: 3px;
             background-color: #d7d7d7;
         }
+
         .aaa-banner__btn {
             display: inline-block;
             padding: 3px 12px;
@@ -55,7 +64,10 @@
             background-color: #818cf8;
             transition: background-color 90ms ease;
         }
+
         .aaa-banner__btn:hover {
+            color:#f0f0f0;
+            text-decoration: none;
             background-color: #4c57c1;
         }
 
@@ -63,9 +75,11 @@
             .aaa-banner__content {
                 font-size: 12px;
             }
+
             .aaa-banner__from {
                 font-size: 10px;
             }
+
             .aaa-banner__btn {
                 font-size: 12px;
             }

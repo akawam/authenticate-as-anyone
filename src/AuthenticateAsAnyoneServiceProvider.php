@@ -80,7 +80,6 @@ class AuthenticateAsAnyoneServiceProvider extends ServiceProvider
         return [
             'namespace' => 'Akawam\AuthenticateAsAnyone\Http\Controllers',
             'prefix' => config('auth-as-anyone.route-prefix'),
-            'middleware' => array_merge(['web'], config('auth-as-anyone.middlewares')),
             'as' => 'authenticate-as-anyone.',
         ];
     }
