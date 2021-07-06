@@ -17,6 +17,7 @@ return [
                         'firstname' => 'firstname', //optional (default is firstname)
                         'login' => 'email',//optional (default is email)
                     ],
+                    'redirect-route' => 'dashboard',
                 ],
         ],
 ];
