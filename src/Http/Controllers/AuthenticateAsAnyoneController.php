@@ -94,7 +94,9 @@ class AuthenticateAsAnyoneController extends Controller
         Auth::guard(aaaGetGuardFromUser($currentUser))->logout();
         Auth::guard(aaaGetGuardFromUser($user))->login($user);
 
-        return redirect()->route('dashboard');
+        $modelExploded = explode('\\', $model);
+        $modelData = $this->models[array_pop($modelExploded)];
+        return redirect()->route($modelData['redirect-route'] ?? 'dashboard');
     }
 
     /**
