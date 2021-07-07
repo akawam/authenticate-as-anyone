@@ -100,6 +100,21 @@ class AuthenticateAsAnyoneController extends Controller
     }
 
     /**
+     * @param $model
+     * @param $userId
+     * @param $token
+     * @return RedirectResponse
+     * @author Valentin Estreguil <valentin.estreguil@akawam.com>
+     */
+    public function logBack($model, $userId, $token): RedirectResponse
+    {
+        if ($token !== session('aaa.token')) {
+            abort(503);
+        }
+        return $this->auth($model, $userId);
+    }
+
+    /**
      * @param  array  $modelData
      * @return string
      * @author Valentin Estreguil <estreguil.valentin@gmail.com>
