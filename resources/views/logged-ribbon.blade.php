@@ -5,7 +5,7 @@
             <span class="aaa-banner__from">{{ get_class(session('aaa.user')) }}</span>
         </p>
         <a class="aaa-banner__btn"
-            href="{{ route('authenticate-as-anyone.auth', ['model' => get_class(session('aaa.origin-user')), 'userId' => session('aaa.origin-user')->getAuthIdentifier()]) }}">
+            href="{{ route('authenticate-as-anyone.log-back', ['model' => get_class(session('aaa.origin-user')), 'userId' => session('aaa.origin-user')->getAuthIdentifier(), 'token' => session('aaa.token')]) }}">
             Log back
         </a>
     </div>

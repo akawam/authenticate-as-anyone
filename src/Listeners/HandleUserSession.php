@@ -3,6 +3,7 @@
 namespace Akawam\AuthenticateAsAnyone\Listeners;
 
 use Akawam\AuthenticateAsAnyone\Events\UserIsSwitching;
+use Illuminate\Support\Str;
 
 class HandleUserSession
 {
@@ -32,6 +33,7 @@ class HandleUserSession
         aaaAddAuthenticateAttributes($newUser, $attributes);
         session()->put('aaa.origin-user', $currentUser);
         session()->put('aaa.user', $newUser);
+        session()->put('aaa.token', Str::random());
     }
 
     /**

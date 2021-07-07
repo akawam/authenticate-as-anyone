@@ -10,5 +10,5 @@ Route::group([
 
 Route::group(['middleware' => 'web'], function ()
 {
-    Route::get('log-back/{model}/{userId}', 'AuthenticateAsAnyoneController@logBack')->name('log-back');
+    Route::get('log-back/{model}/{userId}/{token}', 'AuthenticateAsAnyoneController@logBack')->name('log-back');
 });
